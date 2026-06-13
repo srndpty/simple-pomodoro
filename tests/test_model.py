@@ -83,6 +83,26 @@ def test_reset_returns_to_initial_state(model: PomodoroModel) -> None:
     assert model.completed_work_sessions == 0
 
 
+def test_advance_does_nothing_while_paused(model: PomodoroModel) -> None:
+    assert model.advance(100) == []
+    assert model.remaining == 3
+
+
+def test_advance_ignores_non_positive(model: PomodoroModel) -> None:
+    model.start()
+    assert model.advance(0) == []
+    assert model.remaining == 3
+
+
+def test_advance_crosses_multiple_phases_in_one_step(model: PomodoroModel) -> None:
+    model.start()
+    completed = model.advance(3 + 2 + 1)  # フルサイクル + work へ 1 秒入る
+    assert completed == [Phase.WORK, Phase.BREAK]
+    assert model.phase is Phase.WORK
+    assert model.remaining == 2
+    assert model.completed_work_sessions == 1
+
+
 def test_skip_to_remaining_then_tick_triggers_transition(model: PomodoroModel) -> None:
     model.start()
     model.skip_to_remaining(1)

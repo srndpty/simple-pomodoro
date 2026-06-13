@@ -77,7 +77,7 @@ ignore_missing_imports = true
 # ---------------------------------------------------------------------------
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--strict-markers --cov=pomodoro --cov-report=term-missing --cov-report=xml"
+addopts = "--strict-markers --cov=pomodoro --cov-report=term-missing --cov-report=xml --cov-fail-under=80"
 
 [tool.coverage.run]
 branch = true

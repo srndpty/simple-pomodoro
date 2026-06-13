@@ -100,29 +100,44 @@ class PomodoroModel:
             raise ValueError("seconds must be positive")
         self._remaining = min(seconds, self.phase_duration)
 
+    def advance(self, elapsed_seconds: int) -> list[Phase]:
+        """``elapsed_seconds`` 秒だけ時計を進める。
+
+        必要に応じてフェーズ境界を複数またぎ、完了したフェーズを発生順の
+        リストで返す。一時停止中、または ``elapsed_seconds`` が非正のときは
+        何もせず空リストを返す。
+
+        実時間(単調増加クロック)から算出した経過秒数を渡せるため、スリープ
+        復帰やイベントループの遅延があっても実時間とズレにくい。
+        """
+        if not self._running or elapsed_seconds <= 0:
+            return []
+
+        completed: list[Phase] = []
+        pending = elapsed_seconds
+        while pending > 0:
+            step = min(pending, self._remaining)
+            self._remaining -= step
+            pending -= step
+            if self._remaining == 0:
+                completed.append(self._phase)
+                self._advance_phase()
+        return completed
+
     def tick(self) -> Phase | None:
-        """時計を 1 秒進める。
+        """ちょうど 1 秒進める :meth:`advance` の便利ラッパー。
 
         フェーズ遷移を引き起こして *ちょうど完了した* フェーズを返す。
-        フェーズを完了せずに 1 秒経過した場合、または一時停止中の場合は
-        ``None`` を返す。
+        フェーズを完了しなかった場合、または一時停止中の場合は ``None``。
         """
-        if not self._running or self._remaining <= 0:
-            return None
-
-        self._remaining -= 1
-        if self._remaining > 0:
-            return None
-
-        completed = self._phase
-        self._advance()
-        return completed
+        completed = self.advance(1)
+        return completed[0] if completed else None
 
     # -- 内部処理 ------------------------------------------------------------
     def _duration_for(self, phase: Phase) -> int:
         return self._config.work_seconds if phase is Phase.WORK else self._config.break_seconds
 
-    def _advance(self) -> None:
+    def _advance_phase(self) -> None:
         """次のフェーズへ移行する。work -> break -> work を無限にループする。"""
         if self._phase is Phase.WORK:
             self._completed_work_sessions += 1

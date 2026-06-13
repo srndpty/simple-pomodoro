@@ -34,11 +34,13 @@ class SoundNotifier:
             return
 
         # Windows 以外のプラットフォーム向けのフォールバック(主に開発/CI 用)。
+        # QApplication.instance() の戻り値は QCoreApplication | None なので、
+        # beep() を持つ QApplication であることを isinstance で絞り込む。
         try:
             from PyQt6.QtWidgets import QApplication
 
             app = QApplication.instance()
-            if app is not None:
+            if isinstance(app, QApplication):
                 app.beep()
         except ImportError:
             pass

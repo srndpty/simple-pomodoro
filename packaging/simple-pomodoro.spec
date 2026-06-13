@@ -8,12 +8,19 @@
 成果物は ``dist/simple-pomodoro.exe`` に出力される。
 """
 
+from pathlib import Path
+
 from PyInstaller.building.api import COLLECT, EXE, PYZ  # noqa: F401
 from PyInstaller.building.build_main import Analysis
 
+# SPECPATH は PyInstaller がこの spec の置かれたディレクトリとして注入する。
+# 実行時の cwd に依存しないよう、ここから絶対パスを組み立てる。
+ROOT = Path(SPECPATH).parent  # noqa: F821 (SPECPATH は PyInstaller が注入)
+SRC = ROOT / "src"
+
 a = Analysis(
-    ["../src/pomodoro/__main__.py"],
-    pathex=["../src"],
+    [str(SRC / "pomodoro" / "__main__.py")],
+    pathex=[str(SRC)],
     binaries=[],
     datas=[],
     hiddenimports=[],
