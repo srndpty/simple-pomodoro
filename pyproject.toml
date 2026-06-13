@@ -14,7 +14,14 @@ dependencies = [
     "PyQt6>=6.6",
 ]
 
-[project.optional-dependencies]
+[project.gui-scripts]
+simple-pomodoro = "pomodoro.__main__:main"
+
+# 開発依存は PEP 735 の dependency-group として宣言する。
+# uv は `dev` を既定グループとして扱うため、`uv sync` / `uv run` で自動的に入る
+# (`--extra` 指定が不要)。なお `pip install -e ".[dev]"` では入らない点に注意
+# (pip 25.1+ なら `pip install --group dev` で導入できる)。
+[dependency-groups]
 dev = [
     "ruff>=0.6",
     "mypy>=1.10",
@@ -24,9 +31,6 @@ dev = [
     "pyinstaller>=6.0",
     "PyQt6-stubs>=6.0; python_version < '4.0'",
 ]
-
-[project.gui-scripts]
-simple-pomodoro = "pomodoro.__main__:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pomodoro"]
