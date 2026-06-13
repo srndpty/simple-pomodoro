@@ -35,18 +35,21 @@ src/pomodoro/
 ## はじめに
 
 [uv](https://docs.astral.sh/uv/) を使う(推奨)。`.python-version` で固定された
-Python 3.13 を uv が自動で用意する:
+Python 3.13 を uv が自動で用意する。開発依存は dependency-group の `dev` として
+宣言してあり、`uv sync` で既定で入る(`--extra` 指定は不要):
 
 ```bash
-uv sync --extra dev
+uv sync
 ```
 
-uv を使わない場合は Python 3.12 以上で、従来どおり pip でもインストールできる:
+uv を使わない場合は Python 3.12 以上で pip でもインストールできる。ただし開発依存は
+extra ではなく dependency-group なので、`pip install -e ".[dev]"` では入らない点に注意:
 
 ```bash
 python -m venv .venv
 .venv\Scripts\activate           # PowerShell: .venv\Scripts\Activate.ps1
-pip install -e ".[dev]"
+pip install -e .                 # アプリ本体のみ
+pip install --group dev          # 開発依存(pip 25.1+ が必要)
 ```
 
 ### 実行

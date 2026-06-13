@@ -524,7 +524,7 @@ dependencies = [
     { name = "pyqt6" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "mypy" },
     { name = "pyinstaller" },
@@ -536,17 +536,18 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
-    { name = "pyinstaller", marker = "extra == 'dev'", specifier = ">=6.0" },
-    { name = "pyqt6", specifier = ">=6.6" },
-    { name = "pyqt6-stubs", marker = "python_full_version < '4' and extra == 'dev'", specifier = ">=6.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
-    { name = "pytest-qt", marker = "extra == 'dev'", specifier = ">=4.4" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6" },
+requires-dist = [{ name = "pyqt6", specifier = ">=6.6" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "mypy", specifier = ">=1.10" },
+    { name = "pyinstaller", specifier = ">=6.0" },
+    { name = "pyqt6-stubs", marker = "python_full_version < '4'", specifier = ">=6.0" },
+    { name = "pytest", specifier = ">=8.0" },
+    { name = "pytest-cov", specifier = ">=5.0" },
+    { name = "pytest-qt", specifier = ">=4.4" },
+    { name = "ruff", specifier = ">=0.6" },
 ]
-provides-extras = ["dev"]
 
 [[package]]
 name = "typing-extensions"

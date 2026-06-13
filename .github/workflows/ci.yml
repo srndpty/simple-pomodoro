@@ -32,28 +32,28 @@ jobs:
         with:
           enable-cache: true
           # UV_PYTHON をジョブ全体に設定し、sync と run で同じ Python を使わせる。
-          # これがないと run が .python-version(3.13)に戻って venv を作り直し、
-          # dev 依存(ruff 等)が消える。
+          # これがないと run が .python-version(3.13)に戻り、マトリクスが
+          # 実質 3.13 のみになってしまう。
           python-version: ${{ matrix.python-version }}
 
+      # dev は dependency-group(既定グループ)なので --extra は不要。
+      # 同じ理由で uv run も dev を保持するため --no-sync も要らない。
       - name: Install project (locked)
-        run: uv sync --extra dev --locked
+        run: uv sync --locked
 
-      # 以降は --no-sync で、同期済みの venv をそのまま使う(run による再同期で
-      # dev extra が外れるのを防ぐ)。
       - name: Ruff (lint)
-        run: uv run --no-sync ruff check .
+        run: uv run ruff check .
 
       - name: Ruff (format check)
-        run: uv run --no-sync ruff format --check .
+        run: uv run ruff format --check .
 
       - name: mypy
-        run: uv run --no-sync mypy
+        run: uv run mypy
 
       - name: pytest
         env:
           QT_QPA_PLATFORM: offscreen
-        run: uv run --no-sync pytest
+        run: uv run pytest
 
       - name: Upload coverage
         if: matrix.python-version == '3.13'
@@ -75,10 +75,10 @@ jobs:
 
       # Python のバージョンは .python-version (3.13) に従う = 同梱 exe の出荷版。
       - name: Install project (locked)
-        run: uv sync --extra dev --locked
+        run: uv sync --locked
 
       - name: Build Windows executable
-        run: uv run --no-sync pyinstaller --distpath dist --workpath build packaging/simple-pomodoro.spec
+        run: uv run pyinstaller --distpath dist --workpath build packaging/simple-pomodoro.spec
 
       - name: Smoke-test the executable
         shell: pwsh
