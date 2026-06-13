@@ -34,7 +34,14 @@ src/pomodoro/
 
 ## はじめに
 
-Python 3.10 以上が必要。
+[uv](https://docs.astral.sh/uv/) を使う(推奨)。`.python-version` で固定された
+Python 3.13 を uv が自動で用意する:
+
+```bash
+uv sync --extra dev
+```
+
+uv を使わない場合は Python 3.12 以上で、従来どおり pip でもインストールできる:
 
 ```bash
 python -m venv .venv
@@ -45,7 +52,7 @@ pip install -e ".[dev]"
 ### 実行
 
 ```bash
-python -m pomodoro
+uv run python -m pomodoro
 # またはインストール後は単に:
 simple-pomodoro
 ```
@@ -71,32 +78,39 @@ Ctrl+D を 1 回押すと focus→break のチャイム、もう 1 回押すと 
 品質ツールはすべて `pyproject.toml` に設定済み。
 
 ```bash
-ruff check .            # lint
-ruff format .           # フォーマット
-mypy                    # 厳格な型チェック
-pytest                  # テスト + カバレッジ(ターミナル + coverage.xml)
+uv run ruff check .     # lint
+uv run ruff format .    # フォーマット
+uv run mypy             # 厳格な型チェック
+uv run pytest           # テスト + カバレッジ(80% 未満で失敗)
 ```
 
 ヘッドレス環境(および CI)では、Qt のオフスクリーンバックエンドが必要:
 
 ```bash
-QT_QPA_PLATFORM=offscreen pytest     # PowerShell: $env:QT_QPA_PLATFORM="offscreen"
+QT_QPA_PLATFORM=offscreen uv run pytest   # PowerShell: $env:QT_QPA_PLATFORM="offscreen"
 ```
+
+### Python バージョン方針
+
+- 同梱 exe と開発環境は `.python-version` で **3.13** に固定(uv が管理)。
+- `requires-python` は `>=3.12`、CI は **3.12 / 3.13 / 3.14** で検証する。
+- 本アプリは PyInstaller で Python を同梱するため、利用者側に Python は不要。
+  バージョン選定は開発側の都合のみ。
 
 ## Windows 実行ファイルのビルド
 
 バージョン管理された PyInstaller spec で、単一ファイルの windowed exe を生成する:
 
 ```bash
-pyinstaller packaging/simple-pomodoro.spec
+uv run pyinstaller packaging/simple-pomodoro.spec
 # → dist/simple-pomodoro.exe
 ```
 
 ## CI
 
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml) は、Python 3.10〜3.12 で
-ruff・mypy・pytest(カバレッジ付き)を実行し、その後 Windows 実行ファイルをビルドして
-アーティファクトとしてアップロードする。
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) は、uv を使って Python
+3.12〜3.14 で ruff・mypy・pytest(カバレッジ付き)を実行し、その後 Windows 実行
+ファイルをビルド・起動スモークしてアーティファクトとしてアップロードする。
 
 ## 拡張のヒント
 
