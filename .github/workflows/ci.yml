@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13", "3.14"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system libraries for headless Qt
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libegl1 libgl1 libxkbcommon0 libdbus-1-3
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          # UV_PYTHON をジョブ全体に設定し、sync と run で同じ Python を使わせる。
+          # これがないと run が .python-version(3.13)に戻って venv を作り直し、
+          # dev 依存(ruff 等)が消える。
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install project (locked)
+        run: uv sync --extra dev --locked
+
+      # 以降は --no-sync で、同期済みの venv をそのまま使う(run による再同期で
+      # dev extra が外れるのを防ぐ)。
+      - name: Ruff (lint)
+        run: uv run --no-sync ruff check .
+
+      - name: Ruff (format check)
+        run: uv run --no-sync ruff format --check .
+
+      - name: mypy
+        run: uv run --no-sync mypy
+
+      - name: pytest
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: uv run --no-sync pytest
+
+      - name: Upload coverage
+        if: matrix.python-version == '3.13'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+
+  build-windows:
+    runs-on: windows-latest
+    needs: lint-and-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      # Python のバージョンは .python-version (3.13) に従う = 同梱 exe の出荷版。
+      - name: Install project (locked)
+        run: uv sync --extra dev --locked
+
+      - name: Build Windows executable
+        run: uv run --no-sync pyinstaller --distpath dist --workpath build packaging/simple-pomodoro.spec
+
+      - name: Smoke-test the executable
+        shell: pwsh
+        run: |
+          if (-not (Test-Path dist/simple-pomodoro.exe)) {
+            throw "executable was not produced"
+          }
+          # オフスクリーンで起動し、すぐ終了させてクラッシュしないことを確認する。
+          $env:QT_QPA_PLATFORM = "offscreen"
+          $p = Start-Process -FilePath dist/simple-pomodoro.exe -PassThru
+          Start-Sleep -Seconds 5
+          if ($p.HasExited) {
+            throw "executable exited early with code $($p.ExitCode)"
+          }
+          Stop-Process -Id $p.Id -Force
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: simple-pomodoro-windows
+          path: dist/simple-pomodoro.exe

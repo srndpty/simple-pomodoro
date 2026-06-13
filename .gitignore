@@ -31,6 +31,8 @@ MANIFEST
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
+# ...but our build spec is intentionally version-controlled.
+!packaging/simple-pomodoro.spec
 
 # Installer logs
 pip-log.txt
@@ -205,3 +207,5 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+tmp/
