@@ -31,23 +31,29 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
+          # UV_PYTHON をジョブ全体に設定し、sync と run で同じ Python を使わせる。
+          # これがないと run が .python-version(3.13)に戻って venv を作り直し、
+          # dev 依存(ruff 等)が消える。
+          python-version: ${{ matrix.python-version }}
 
       - name: Install project (locked)
-        run: uv sync --extra dev --locked --python ${{ matrix.python-version }}
+        run: uv sync --extra dev --locked
 
+      # 以降は --no-sync で、同期済みの venv をそのまま使う(run による再同期で
+      # dev extra が外れるのを防ぐ)。
       - name: Ruff (lint)
-        run: uv run ruff check .
+        run: uv run --no-sync ruff check .
 
       - name: Ruff (format check)
-        run: uv run ruff format --check .
+        run: uv run --no-sync ruff format --check .
 
       - name: mypy
-        run: uv run mypy
+        run: uv run --no-sync mypy
 
       - name: pytest
         env:
           QT_QPA_PLATFORM: offscreen
-        run: uv run pytest
+        run: uv run --no-sync pytest
 
       - name: Upload coverage
         if: matrix.python-version == '3.13'
@@ -72,7 +78,7 @@ jobs:
         run: uv sync --extra dev --locked
 
       - name: Build Windows executable
-        run: uv run pyinstaller --distpath dist --workpath build packaging/simple-pomodoro.spec
+        run: uv run --no-sync pyinstaller --distpath dist --workpath build packaging/simple-pomodoro.spec
 
       - name: Smoke-test the executable
         shell: pwsh
